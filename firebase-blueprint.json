@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "Rating": {
+      "title": "Rating",
+      "description": "A user's rating of the developer's skills and website.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user submitting the rating."
+        },
+        "websiteReliability": {
+          "type": "number",
+          "description": "Rating from 1 to 5."
+        },
+        "projectQuality": {
+          "type": "number",
+          "description": "Rating from 1 to 5."
+        },
+        "portfolioQuality": {
+          "type": "number",
+          "description": "Rating from 1 to 5."
+        },
+        "skillQuality": {
+          "type": "number",
+          "description": "Rating from 1 to 5."
+        },
+        "communicationSkill": {
+          "type": "number",
+          "description": "Rating from 1 to 5."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the rating was submitted."
+        }
+      },
+      "required": [
+        "userId",
+        "websiteReliability",
+        "projectQuality",
+        "portfolioQuality",
+        "skillQuality",
+        "communicationSkill",
+        "timestamp"
+      ]
+    }
+  },
+  "firestore": {
+    "/ratings/{userId}": {
+      "schema": {
+        "$ref": "#/entities/Rating"
+      },
+      "description": "Stores individual user ratings."
+    }
+  }
+}

@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: ratings
+    // Document ID: {userId}
+    // Fields:
+    //   - userId: string (required, immutable) - The UID of the user
+    //   - websiteReliability: number (required, 1-5)
+    //   - projectQuality: number (required, 1-5)
+    //   - portfolioQuality: number (required, 1-5)
+    //   - skillQuality: number (required, 1-5)
+    //   - communicationSkill: number (required, 1-5)
+    //   - timestamp: timestamp (required, immutable)
+    //
+    // ===============================================================
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function isValidRatingValue(val) {
+      return val is number && val >= 1 && val <= 5;
+    }
+    
+    function isValidRating() {
+      let data = request.resource.data;
+      return hasOnlyAllowedFields(['userId', 'websiteReliability', 'projectQuality', 'portfolioQuality', 'skillQuality', 'communicationSkill', 'timestamp']) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             isValidRatingValue(data.websiteReliability) &&
+             isValidRatingValue(data.projectQuality) &&
+             isValidRatingValue(data.portfolioQuality) &&
+             isValidRatingValue(data.skillQuality) &&
+             isValidRatingValue(data.communicationSkill) &&
+             data.timestamp is timestamp;
+    }
+    
+    function areImmutableFieldsUnchanged() {
+      return request.resource.data.userId == resource.data.userId &&
+             request.resource.data.timestamp == resource.data.timestamp;
+    }
+    
+    match /ratings/{userId} {
+      // Allow any authenticated user to read all ratings to calculate the average
+      // No PII is stored in this document, only numerical ratings and anonymous UIDs.
+      allow read: if isAuthenticated();
+      
+      allow create: if isOwner(userId) && isValidRating();
+      allow update: if isOwner(userId) && isValidRating() && areImmutableFieldsUnchanged();
+      allow delete: if isOwner(userId);
+    }
+  }
+}
